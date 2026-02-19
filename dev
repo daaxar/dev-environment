@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Script para gestionar el contenedor de desarrollo aislado
+
+export DEV_CONTAINER_NAME="dev-isolated-$(basename $PWD)"
+
+case "$1" in
+    start)
+        echo "🚀 Iniciando contenedor de desarrollo aislado..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml up -d && \
+        echo "✅ Contenedor iniciado" && \
+        echo "📝 Usa './dev.sh shell' para acceder"
+        ;;
+    
+    stop)
+        echo "🛑 Deteniendo contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml down && \
+        echo "✅ Contenedor detenido"
+        ;;
+    
+    shell|bash)
+        echo "🔧 Accediendo al contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml exec dev-container bash
+        ;;
+    
+    restart)
+        echo "🔄 Reiniciando contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml restart && \
+        echo "✅ Contenedor reiniciado"
+        ;;
+    
+    rebuild)
+        echo "🔨 Reconstruyendo contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml down && \
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml build --no-cache && \
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml up -d && \
+        echo "✅ Contenedor reconstruido"
+        ;;
+    
+    build)
+        echo "🔨 Reconstruyendo contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml down && \
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml build && \
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml up -d && \
+        echo "✅ Contenedor reconstruido"
+        ;;
+    
+    update)
+        echo "🔨 Reconstruyendo contenedor..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml build && \
+        echo "✅ Contenedor reconstruido"
+        ;;
+    
+    logs)
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml logs -f dev-container
+        ;;
+    
+    clean)
+        echo "🧹 Limpiando contenedor y volúmenes..."
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml down -v && \
+        echo "✅ Limpieza completada"
+        ;;
+    
+    status)
+        echo "📊 Estado del contenedor:"
+        docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml ps
+        ;;
+    
+    *)
+        echo "🤖 Contenedor de Desarrollo Aislado"
+        echo ""
+        echo "Uso: ./dev.sh [comando]"
+        echo ""
+        echo "Comandos disponibles:"
+        echo "  start     - Iniciar el contenedor"
+        echo "  stop      - Detener el contenedor"
+        echo "  shell     - Abrir shell en el contenedor"
+        echo "  restart   - Reiniciar el contenedor"
+        echo "  rebuild   - Reconstruir el contenedor desde cero"
+        echo "  update    - Reconstruir el contenedor desde cache"
+        echo "  build     - Reconstruir el contenedor"
+        echo "  logs      - Ver logs del contenedor"
+        echo "  clean     - Eliminar contenedor y volúmenes"
+        echo "  status    - Ver estado del contenedor"
+        echo ""
+        echo "Ejemplo: ./dev.sh start"
+        ;;
+esac

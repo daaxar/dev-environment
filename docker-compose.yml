@@ -1,0 +1,30 @@
+services:
+  dev-container:
+    build:
+      context: ${PWD}
+      dockerfile: /home/daaxar/dev/daaxar/envDev/Dockerfile
+    # container_name: agent-dev-isolated
+    container_name: ${DEV_CONTAINER_NAME:-dev-isolated}
+    volumes:
+      # Montar el directorio actual en /workspace
+      - ${PWD}:/workspace
+      # # Volumen separado para evitar conflictos con node_modules
+      # - node_modules:/workspace/node_modules
+    working_dir: /workspace
+    # Mantener el contenedor ejecutándose
+    stdin_open: true
+    tty: true
+    # Variables de entorno para entorno limpio
+    environment:
+      - ENV=development
+      - CLEAN_ENV=true
+    # Redes
+    networks:
+      - isolated-network
+
+# volumes:
+  # node_modules:
+
+networks:
+  isolated-network:
+    driver: bridge
