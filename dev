@@ -1,90 +1,169 @@
 #!/bin/bash
 
-# Script para gestionar el contenedor de desarrollo aislado
-
+# ─── Configuración ────────────────────────────────────────────────────────────
 export DEV_CONTAINER_NAME="dev-isolated-$(basename $PWD)"
 COMPOSE_PROJECT="dev-$(basename $PWD)"
 DC="docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml -p $COMPOSE_PROJECT"
+PROJECT_NAME="$(basename $PWD)"
 
+# ─── Colores ──────────────────────────────────────────────────────────────────
+BOLD="\033[1m"
+DIM="\033[2m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+RED="\033[0;31m"
+CYAN="\033[0;36m"
+RESET="\033[0m"
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+info()    { echo -e "  ${CYAN}${BOLD}→${RESET}  $*"; }
+ok()      { echo -e "  ${GREEN}${BOLD}✓${RESET}  $*"; }
+warn()    { echo -e "  ${YELLOW}${BOLD}!${RESET}  $*"; }
+error()   { echo -e "  ${RED}${BOLD}✗${RESET}  $*"; }
+divider() { echo -e "${DIM}  ────────────────────────────────${RESET}"; }
+
+is_running() {
+    $DC ps --status running --quiet 2>/dev/null | grep -q .
+}
+
+ensure_running() {
+    if ! is_running; then
+        info "El entorno no está activo. Iniciando..."
+        $DC up -d -q 2>/dev/null || $DC up -d 2>&1 | tail -1
+        sleep 1
+    fi
+}
+
+# ─── Comandos ─────────────────────────────────────────────────────────────────
 case "$1" in
-    start)
-        echo "🚀 Iniciando contenedor de desarrollo aislado..."
-        $DC up -d && \
-        echo "✅ Contenedor iniciado" && \
-        echo "📝 Usa './dev shell' para acceder"
+
+    start|up)
+        echo ""
+        if is_running; then
+            warn "El entorno '${BOLD}$PROJECT_NAME${RESET}${YELLOW}' ya está activo."
+            info "Usa ${BOLD}dev shell${RESET} para entrar."
+        else
+            info "Iniciando entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+            $DC up -d 2>&1 | grep -v "^#" | grep -v "^$" | tail -3
+            ok "Entorno listo. Usa ${BOLD}dev shell${RESET} para entrar."
+        fi
+        echo ""
         ;;
-    
-    stop)
-        echo "🛑 Deteniendo contenedor..."
-        $DC down && \
-        echo "✅ Contenedor detenido"
+
+    stop|down)
+        echo ""
+        if ! is_running; then
+            warn "El entorno '${BOLD}$PROJECT_NAME${RESET}${YELLOW}' ya estaba detenido."
+        else
+            info "Deteniendo entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+            $DC down 2>&1 | tail -1
+            ok "Entorno detenido."
+        fi
+        echo ""
         ;;
-    
-    shell|bash)
-        echo "🔧 Accediendo al contenedor..."
+
+    shell|bash|enter|sh)
+        echo ""
+        ensure_running
+        ok "Entrando al entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+        divider
         $DC exec dev-container bash
+        divider
+        ok "De vuelta en el host."
+        echo ""
         ;;
-    
+
     restart)
-        echo "🔄 Reiniciando contenedor..."
-        $DC restart && \
-        echo "✅ Contenedor reiniciado"
+        echo ""
+        info "Reiniciando entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+        $DC restart 2>&1 | tail -1
+        ok "Entorno reiniciado."
+        echo ""
         ;;
-    
+
     rebuild)
-        echo "🔨 Reconstruyendo contenedor..."
-        $DC down && \
-        $DC build --no-cache && \
-        $DC up -d && \
-        echo "✅ Contenedor reconstruido"
+        echo ""
+        info "Reconstruyendo entorno desde cero '${BOLD}$PROJECT_NAME${RESET}'..."
+        warn "Esto puede tardar unos minutos..."
+        $DC down 2>&1 | tail -1
+        $DC build --no-cache
+        $DC up -d 2>&1 | tail -1
+        ok "Reconstrucción completada."
+        echo ""
         ;;
-    
-    build)
-        echo "🔨 Reconstruyendo contenedor..."
-        $DC down && \
-        $DC build && \
-        $DC up -d && \
-        echo "✅ Contenedor reconstruido"
+
+    build|update)
+        echo ""
+        info "Actualizando imagen del entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+        $DC build
+        ok "Imagen actualizada. Usa ${BOLD}dev restart${RESET} para aplicar los cambios."
+        echo ""
         ;;
-    
-    update)
-        echo "🔨 Reconstruyendo contenedor..."
-        $DC build && \
-        echo "✅ Contenedor reconstruido"
-        ;;
-    
-    logs)
+
+    logs|log)
+        echo ""
+        info "Mostrando logs de '${BOLD}$PROJECT_NAME${RESET}' (Ctrl+C para salir)..."
+        divider
         $DC logs -f dev-container
         ;;
-    
-    clean)
-        echo "🧹 Limpiando contenedor y volúmenes..."
-        $DC down -v && \
-        echo "✅ Limpieza completada"
+
+    clean|reset)
+        echo ""
+        warn "Esto eliminará el entorno y todos sus datos locales."
+        read -r -p "  ¿Continuar? [s/N] " confirm
+        if [[ "$confirm" =~ ^[sS]$ ]]; then
+            info "Limpiando entorno '${BOLD}$PROJECT_NAME${RESET}'..."
+            $DC down -v 2>&1 | tail -1
+            ok "Entorno eliminado."
+        else
+            info "Operación cancelada."
+        fi
+        echo ""
         ;;
-    
-    status)
-        echo "📊 Estado del contenedor:"
-        $DC ps
+
+    status|ps)
+        echo ""
+        echo -e "  ${BOLD}Entorno:${RESET} $PROJECT_NAME"
+        divider
+        if is_running; then
+            ok "Activo y en ejecución"
+        else
+            warn "Detenido"
+        fi
+        divider
+        $DC ps 2>/dev/null
+        echo ""
         ;;
-    
+
+    "")
+        echo ""
+        echo -e "  ${BOLD}Entorno:${RESET} $PROJECT_NAME"
+        divider
+        if is_running; then
+            ok "Activo  —  usa ${BOLD}dev shell${RESET} para entrar"
+        else
+            warn "Detenido  —  usa ${BOLD}dev start${RESET} para activar"
+        fi
+        echo ""
+        echo -e "  ${BOLD}Comandos:${RESET}"
+        echo -e "    ${CYAN}dev shell${RESET}    Entrar al entorno (lo inicia si es necesario)"
+        echo -e "    ${CYAN}dev start${RESET}    Activar el entorno en segundo plano"
+        echo -e "    ${CYAN}dev stop${RESET}     Detener el entorno"
+        echo -e "    ${CYAN}dev restart${RESET}  Reiniciar el entorno"
+        echo -e "    ${CYAN}dev build${RESET}    Actualizar la imagen"
+        echo -e "    ${CYAN}dev rebuild${RESET}  Reconstruir desde cero"
+        echo -e "    ${CYAN}dev logs${RESET}     Ver logs en tiempo real"
+        echo -e "    ${CYAN}dev clean${RESET}    Eliminar entorno y datos"
+        echo -e "    ${CYAN}dev status${RESET}   Estado detallado"
+        echo ""
+        ;;
+
     *)
-        echo "🤖 Contenedor de Desarrollo Aislado"
         echo ""
-        echo "Uso: ./dev.sh [comando]"
+        error "Comando desconocido: '${BOLD}$1${RESET}'"
+        info "Ejecuta ${BOLD}dev${RESET} sin argumentos para ver los comandos disponibles."
         echo ""
-        echo "Comandos disponibles:"
-        echo "  start     - Iniciar el contenedor"
-        echo "  stop      - Detener el contenedor"
-        echo "  shell     - Abrir shell en el contenedor"
-        echo "  restart   - Reiniciar el contenedor"
-        echo "  rebuild   - Reconstruir el contenedor desde cero"
-        echo "  update    - Reconstruir el contenedor desde cache"
-        echo "  build     - Reconstruir el contenedor"
-        echo "  logs      - Ver logs del contenedor"
-        echo "  clean     - Eliminar contenedor y volúmenes"
-        echo "  status    - Ver estado del contenedor"
-        echo ""
-        echo "Ejemplo: ./dev.sh start"
+        exit 1
         ;;
+
 esac
