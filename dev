@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # ─── Configuración ────────────────────────────────────────────────────────────
-export DEV_CONTAINER_NAME="dev-isolated-$(basename $PWD)"
-COMPOSE_PROJECT="dev-$(basename $PWD)"
+DEV_CONTAINER_ID="$(basename $PWD)-$(echo -n "$PWD" | sha1sum | cut -c1-8)"
+export DEV_CONTAINER_NAME="dev-isolated-${DEV_CONTAINER_ID}"
+COMPOSE_PROJECT="dev-${DEV_CONTAINER_ID}"
 DC="docker compose -f /home/daaxar/dev/daaxar/envDev/docker-compose.yml -p $COMPOSE_PROJECT"
-PROJECT_NAME="$(basename $PWD)"
+PROJECT_NAME="${DEV_CONTAINER_ID}"
 
 # ─── Colores ──────────────────────────────────────────────────────────────────
 BOLD="\033[1m"
