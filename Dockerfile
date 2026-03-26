@@ -11,6 +11,23 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     git \
+    ripgrep \
+    fd-find \
+    jq \
+    yq \
+    fzf \
+    tree \
+    unzip \
+    zip \
+    xz-utils \
+    less \
+    procps \
+    lsof \
+    net-tools \
+    iproute2 \
+    dnsutils \
+    tmux \
+    bat \
     openssh-server \
     sudo \
     locales \
@@ -20,6 +37,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     nano \
+    zstd \
     && apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
@@ -58,7 +76,7 @@ RUN echo "alias l=\"ls -la\"\n" >> ./.bash_aliases && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
     curl -fsSL https://opencode.ai/install | bash
 
-ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH="/home/developer/.cargo/bin:${PATH}"
 
 WORKDIR /home/developer/dev/$(basename ${PWD})
 
