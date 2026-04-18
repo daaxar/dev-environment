@@ -1,47 +1,48 @@
 # Contenedor de desarrollo aislado con VS Code Server
 FROM debian:bookworm
 
-ARG NODE_VERSION=20.20.0
+ARG NODE_VERSION=22.22.2
 
 # Evitar prompts interactivos durante la instalación
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Instalar dependencias base
 RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    git \
-    ripgrep \
-    fd-find \
-    jq \
-    yq \
-    fzf \
-    tree \
-    unzip \
-    zip \
-    xz-utils \
-    less \
-    procps \
-    lsof \
-    net-tools \
-    iproute2 \
-    dnsutils \
-    tmux \
     bat \
-    openssh-server \
-    sudo \
-    locales \
-    ca-certificates \
+    bubblewrap \
     build-essential \
+    ca-certificates \
+    curl \
+    dnsutils \
+    fd-find \
+    fzf \
+    git \
+    iproute2 \
+    jq \
+    less \
+    locales \
+    lsof \
+    nano \
+    net-tools \
+    openssh-server \
+    procps \
     python3 \
     python3-pip \
     python3-venv \
-    nano \
+    ripgrep \
+    sudo \
+    tmux \
+    tree \
+    unzip \
+    wget \
+    xz-utils \
+    yq \
+    zip \
     zstd \
     && apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
-# # Configurar locale
+    # # Configurar locale
 # RUN locale-gen en_US.UTF-8
 # ENV LANG=en_US.UTF-8 \
 #     LANGUAGE=en_US:en \
@@ -53,7 +54,7 @@ RUN useradd -m -s /bin/bash -G sudo developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # # Instalar Node.js (necesario para muchos proyectos)
-# RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+# RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 #     apt-get install -y nodejs && \
 #     npm install -g npm@latest
 
